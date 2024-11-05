@@ -1,0 +1,136 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями</title>
+    <link rel="stylesheet" type="text/css" href="../static/styles/auth1.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .status {
+            font-weight: bold;
+        }
+        .action-button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        .action-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Управление пользователями</h1>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Блокировка</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr id="user-{{ user.id }}">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td class="status">{{ 'Да' if user.is_blocked else 'Нет' }}</td>
+                    <td>
+                        <button class="action-button" data-user-id="{{ user.id }}">
+                            {{ 'Разблокировать' if user.is_blocked else 'Заблокировать' }}
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.action-button');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', async function () {
+                const userId = this.dataset.userId;
+
+                try {
+                    const response = await fetch(`/auth/block/${userId}`, { method: 'POST' });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        alert(errorData.detail);
+                        return;
+                    }
+
+                    const data = await response.json();
+                    const userRow = document.getElementById(`user-${userId}`);
+                    const statusCell = userRow.querySelector('.status');
+
+                    // Обновляем текст кнопки и статус
+                    if (data.is_blocked) {
+                        statusCell.textContent = 'Да';
+                        this.textContent = 'Разблокировать';
+                    } else {
+                        statusCell.textContent = 'Нет';
+                        this.textContent = 'Заблокировать';
+                    }
+
+                    alert(data.message);
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
